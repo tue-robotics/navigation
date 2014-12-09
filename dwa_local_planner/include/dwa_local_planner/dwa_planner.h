@@ -129,8 +129,11 @@ namespace dwa_local_planner {
       double sim_period_, sim_time_;
 
       //! Cost functions with parameters
-      //base_local_planner::ObstacleCostFunction obstacle_costs_; /// <@brief discards trajectories that move into obstacles
-      base_local_planner::OccupancyVelocityCostFunction occ_vel_costs_; /// <@brief discards trajectories that on which the velocity is not allowed
+      base_local_planner::ObstacleCostFunction obstacle_costs_; /// <@brief discards trajectories that move into obstacles
+      //base_local_planner::OccupancyVelocityCostFunction occ_vel_costs_; /// <@brief discards trajectories that on which the velocity is not allowed
+      double align_occ_scale_;
+      double default_occ_scale_;
+      double arrive_occ_scale_;
 
       base_local_planner::MapGridCostFunction plan_costs_; /// <@brief prefers trajectories on plan
       double align_plan_scale_;

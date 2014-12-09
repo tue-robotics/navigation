@@ -89,31 +89,36 @@ namespace dwa_local_planner {
         align_plan_scale_ = config.align_plan_scale;
         align_goal_scale_ = config.align_goal_scale;
         align_cmd_scale_  = config.align_cmd_scale;
+        align_occ_scale_  = config.align_occ_scale;
 
         default_align_scale_ = config.default_align_scale;
         default_plan_scale_ = config.default_plan_scale;
         default_goal_scale_ = config.default_goal_scale;
         default_cmd_scale_  = config.default_cmd_scale;
+        default_occ_scale_  = config.default_occ_scale;
 
         arrive_align_scale_ = config.arrive_align_scale;
         arrive_plan_scale_ = config.arrive_plan_scale;
         arrive_goal_scale_ = config.arrive_goal_scale;
         arrive_cmd_scale_  = config.arrive_cmd_scale;
-
+        arrive_occ_scale_  = config.arrive_occ_scale;
 
         ROS_INFO_STREAM("Scales configured:\n"
                         << "    - Align:\n"
                         << "        - align scale : " << config.align_align_scale << " [-]\n"
                         << "        - plan scale : " << config.align_plan_scale << " [-]\n"
                         << "        - goal scale : " << config.align_goal_scale << " [-]\n"
+                        << "        - obstacle scale : " << config.align_occ_scale << " [-]\n"
                         << "    - Default:\n"
                         << "        - align scale : " << config.default_align_scale << " [-]\n"
                         << "        - plan scale : " << config.default_plan_scale << " [-]\n"
                         << "        - goal scale : " << config.default_goal_scale << " [-]\n"
+                        << "        - obstacle scale : " << config.default_occ_scale << " [-]\n"
                         << "    - Arrive:\n"
                         << "        - align scale : " << config.arrive_align_scale << " [-]\n"
                         << "        - plan scale : " << config.arrive_plan_scale << " [-]\n"
                         << "        - goal scale : " << config.arrive_goal_scale << " [-]\n"
+                        << "        - obstacle scale : " << config.arrive_occ_scale << " [-]\n"
                         );
 
         //! Set cmd_vel costs
@@ -140,12 +145,20 @@ namespace dwa_local_planner {
 
 
         //! Set parameters for occupancy velocity costfunction
-        occ_vel_costs_.setParams(config.max_trans_vel);
+        //occ_vel_costs_.setParams(config.max_trans_vel);
+        obstacle_costs_.setParams(config.acc_lim_x, config.acc_lim_y);
+
+        ROS_INFO_STREAM("Acceleration limits\n"
+                        << "    - x: " << config.acc_lim_x << " [m/s^2]\n"
+                        << "    - y: " << config.acc_lim_y << " [m/s^2]\n"
+                        );
+
+
     }
 
     DWAPlanner::DWAPlanner(std::string name, base_local_planner::LocalPlannerUtil *planner_util) :
         planner_util_(planner_util),
-        occ_vel_costs_(planner_util->getCostmap()),
+        obstacle_costs_(planner_util->getCostmap()),
         plan_costs_(planner_util->getCostmap()),
         goal_costs_(planner_util->getCostmap()),
         vis_(planner_util->getCostmap(), goal_costs_, plan_costs_, planner_util->getGlobalFrame())
@@ -153,7 +166,7 @@ namespace dwa_local_planner {
         // Costfunctions
         std::vector<base_local_planner::TrajectoryCostFunction*> critics;
         critics.push_back(&goal_costs_);
-        critics.push_back(&occ_vel_costs_);
+        critics.push_back(&obstacle_costs_);
         critics.push_back(&plan_costs_);
         critics.push_back(&alignment_costs_);
         critics.push_back(&cmd_vel_costs_);
@@ -211,6 +224,8 @@ namespace dwa_local_planner {
 
             cmd_vel_costs_.setCoefficients(align_cmd_px_, align_cmd_nx_, align_cmd_py_, align_cmd_ny_, align_cmd_pth_, align_cmd_nth_);
 
+            obstacle_costs_.setScale(align_occ_scale_);
+
             break;
 
         case Default:
@@ -221,6 +236,8 @@ namespace dwa_local_planner {
             alignment_costs_.setDesiredOrientation(tf::getYaw(local_plan.front().pose.orientation));
 
             cmd_vel_costs_.setCoefficients(default_cmd_px_, default_cmd_nx_, default_cmd_py_, default_cmd_ny_, default_cmd_pth_, default_cmd_nth_);
+
+            obstacle_costs_.setScale(default_occ_scale_);
 
             break;
 
@@ -233,6 +250,8 @@ namespace dwa_local_planner {
 
             cmd_vel_costs_.setCoefficients(arrive_cmd_px_, arrive_cmd_nx_, arrive_cmd_py_, arrive_cmd_ny_, arrive_cmd_pth_, arrive_cmd_nth_);
 
+            obstacle_costs_.setScale(arrive_occ_scale_);
+
             break;
         }
 
@@ -244,7 +263,8 @@ namespace dwa_local_planner {
         plan_costs_.setTargetPoses(local_plan);
 
         //! Update footprint if changed
-        occ_vel_costs_.setFootprint(footprint_spec);
+        //occ_vel_costs_.setFootprint(footprint_spec);
+        obstacle_costs_.setFootprint(footprint_spec);
     }
 
     base_local_planner::Trajectory DWAPlanner::findBestPath(tf::Stamped<tf::Pose> robot_pose, tf::Stamped<tf::Pose> robot_vel, tf::Stamped<tf::Pose> goal_pose)
