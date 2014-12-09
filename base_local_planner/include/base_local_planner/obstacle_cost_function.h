@@ -72,6 +72,7 @@ public:
       const double& th,
       const double& vel_x,
       const double& vel_y,
+      const double& vel_theta,
       const double& max_acc_x,
       const double& max_acc_y,
       std::vector<geometry_msgs::Point> footprint_spec, costmap_2d::Costmap2D *costmap, WorldModel *world_model);
