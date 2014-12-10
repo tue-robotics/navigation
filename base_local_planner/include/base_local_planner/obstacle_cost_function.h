@@ -61,7 +61,7 @@ public:
 
   void setSumScores(bool score_sums){ sum_scores_=score_sums; }
 
-  void setParams(double max_acc_x, double max_acc_y);
+  void setParams(double max_acc_x, double max_acc_y, double max_trans_vel);
   void setFootprint(std::vector<geometry_msgs::Point> footprint_spec);
 
   // helper functions, made static for easy unit testing
@@ -75,6 +75,7 @@ public:
       const double& vel_theta,
       const double& max_acc_x,
       const double& max_acc_y,
+      const double& max_trans_vel,
       std::vector<geometry_msgs::Point> footprint_spec, costmap_2d::Costmap2D *costmap, WorldModel *world_model);
 
 private:
@@ -83,7 +84,7 @@ private:
   base_local_planner::WorldModel* world_model_;
   bool sum_scores_;
   //footprint scaling with velocity;
-  double max_acc_x_, max_acc_y_;
+  double max_acc_x_, max_acc_y_, max_trans_vel_;
 };
 
 } /* namespace base_local_planner */

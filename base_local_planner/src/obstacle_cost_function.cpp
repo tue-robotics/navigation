@@ -46,7 +46,8 @@ ObstacleCostFunction::ObstacleCostFunction(costmap_2d::Costmap2D* costmap)
     : costmap_(costmap),
       sum_scores_(false),
       max_acc_x_(1000.0),
-      max_acc_y_(1000.0){
+      max_acc_y_(1000.0),
+      max_trans_vel_(0.0) {
   if (costmap != NULL) {
     world_model_ = new base_local_planner::CostmapModel(*costmap_);
   }
@@ -59,9 +60,10 @@ ObstacleCostFunction::~ObstacleCostFunction() {
 }
 
 
-void ObstacleCostFunction::setParams(double max_acc_x, double max_acc_y) {
-  max_acc_x_ = max_acc_x;
-  max_acc_y_ = max_acc_y;
+void ObstacleCostFunction::setParams(double max_acc_x, double max_acc_y, double max_trans_vel) {
+  max_acc_x_     = max_acc_x;
+  max_acc_y_     = max_acc_y;
+  max_trans_vel_ = max_trans_vel;
 }
 
 void ObstacleCostFunction::setFootprint(std::vector<geometry_msgs::Point> footprint_spec) {
@@ -91,7 +93,7 @@ double ObstacleCostFunction::scoreTrajectory(Trajectory &traj) {
     traj.getPoint(i, px, py, pth);
     double f_cost = footprintCost(px, py, pth,
         traj.xv_, traj.yv_, traj.thetav_,
-        max_acc_x_, max_acc_y_,
+        max_acc_x_, max_acc_y_, max_trans_vel_,
         footprint_spec_,
         costmap_, world_model_);
 
@@ -133,6 +135,7 @@ double ObstacleCostFunction::footprintCost (
     const double& vel_theta,
     const double& max_acc_x,
     const double& max_acc_y,
+    const double& max_trans_vel,
     std::vector<geometry_msgs::Point> footprint_spec,
     costmap_2d::Costmap2D* costmap,
     base_local_planner::WorldModel* world_model) {
@@ -196,8 +199,16 @@ double ObstacleCostFunction::footprintCost (
   }
 
   //double occ_cost = std::max(std::max(occ_cost, footprint_cost), double(costmap->getCost(cell_x, cell_y)));
-  double occ_cost = std::max(footprint_cost, double(costmap->getCost(cell_x, cell_y)));
+  double center_cost = double(costmap->getCost(cell_x, cell_y));
 
+
+  // Limit velocity based on costs
+  double max_vel = (1 - center_cost / 255.0) * max_trans_vel;
+  if (hypot(vel_x, vel_y) > max_vel) {// && i == traj.getPointsSize() - 1)
+      return -5.0;
+  }
+
+  double occ_cost = std::max(footprint_cost, center_cost);
   return occ_cost;
 }
 

@@ -146,7 +146,7 @@ namespace dwa_local_planner {
 
         //! Set parameters for occupancy velocity costfunction
         //occ_vel_costs_.setParams(config.max_trans_vel);
-        obstacle_costs_.setParams(config.acc_lim_x, config.acc_lim_y);
+        obstacle_costs_.setParams(config.acc_lim_x, config.acc_lim_y, config.max_trans_vel);
 
         ROS_INFO_STREAM("Acceleration limits\n"
                         << "    - x: " << config.acc_lim_x << " [m/s^2]\n"
@@ -159,6 +159,7 @@ namespace dwa_local_planner {
     DWAPlanner::DWAPlanner(std::string name, base_local_planner::LocalPlannerUtil *planner_util) :
         planner_util_(planner_util),
         obstacle_costs_(planner_util->getCostmap()),
+        //occ_vel_costs_(planner_util->getCostmap()),
         plan_costs_(planner_util->getCostmap()),
         goal_costs_(planner_util->getCostmap()),
         vis_(planner_util->getCostmap(), goal_costs_, plan_costs_, planner_util->getGlobalFrame())
@@ -167,6 +168,7 @@ namespace dwa_local_planner {
         std::vector<base_local_planner::TrajectoryCostFunction*> critics;
         critics.push_back(&goal_costs_);
         critics.push_back(&obstacle_costs_);
+        //critics.push_back(&occ_vel_costs_);
         critics.push_back(&plan_costs_);
         critics.push_back(&alignment_costs_);
         critics.push_back(&cmd_vel_costs_);
