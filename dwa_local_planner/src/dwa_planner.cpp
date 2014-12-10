@@ -146,11 +146,11 @@ namespace dwa_local_planner {
 
         //! Set parameters for occupancy velocity costfunction
         //occ_vel_costs_.setParams(config.max_trans_vel);
-        obstacle_costs_.setParams(config.acc_lim_x, config.acc_lim_y, config.max_trans_vel);
+        obstacle_costs_.setParams(config.deacc_limit_trans, config.deacc_limit_trans, config.max_trans_vel);
 
         ROS_INFO_STREAM("Acceleration limits\n"
-                        << "    - x: " << config.acc_lim_x << " [m/s^2]\n"
-                        << "    - y: " << config.acc_lim_y << " [m/s^2]\n"
+                        << "    - x: " << config.deacc_limit_trans << " [m/s^2]\n"
+                        << "    - y: " << config.deacc_limit_trans << " [m/s^2]\n"
                         );
 
 
@@ -292,6 +292,27 @@ namespace dwa_local_planner {
         vis_.publishDesiredOrientation(alignment_costs_.getDesiredOrientation(), robot_pose);
         vis_.publishCostGrid();
         vis_.publishTrajectoryCloud(all_explored);
+
+        ///// Additional debug
+        geometry_msgs::PoseStamped pose_msg, vel_msg;
+        tf::poseStampedTFToMsg(robot_pose, pose_msg);
+        tf::poseStampedTFToMsg(robot_vel, vel_msg);
+        double cost = obstacle_costs_.footprintCost(
+            pose_msg.pose.position.x,
+            pose_msg.pose.position.y,
+            tf::getYaw(pose_msg.pose.orientation),
+            vel_msg.pose.position.x,
+            vel_msg.pose.position.y,
+            tf::getYaw(vel_msg.pose.orientation),
+            0.35,
+            0.35,
+            1.0,
+            obstacle_costs_.getFootprint(),
+            obstacle_costs_.getCostMap(),
+            obstacle_costs_.getWorldModel());
+            //std::vector<geometry_msgs::Point> footprint_spec, costmap_2d::Costmap2D *costmap, WorldModel *world_model);*/
+        ROS_WARN_THROTTLE(1.0, "Footprint cost = %f", cost);
+        /////
 
         return result_traj;
     }

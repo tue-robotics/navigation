@@ -158,14 +158,14 @@ double ObstacleCostFunction::footprintCost (
 
         double dxc = 0.0;
         double dyc = 0.0;
-        if (footprint_spec[i].x > 0.0) {
+        if (footprint_spec[i].x > 0.0 && vel_x > 0.0) {
             dxc = dx;
-        } else if (footprint_spec[i].x < 0.0) {
+        } else if (footprint_spec[i].x < 0.0 && vel_x < 0.0) {
             dxc = -dx;
         }
-        if (footprint_spec[i].y > 0.0) {
+        if (footprint_spec[i].y > 0.0 && vel_y > 0.0) {
             dyc = dy;
-        } else if (footprint_spec[i].y < 0.0) {
+        } else if (footprint_spec[i].y < 0.0 && vel_y < 0.0) {
             dyc = -dy;
         }
         new_pt.x = x + (footprint_spec[i].x + dxc) * cos_th - (footprint_spec[i].y + dyc) * sin_th;
@@ -200,15 +200,29 @@ double ObstacleCostFunction::footprintCost (
 
   //double occ_cost = std::max(std::max(occ_cost, footprint_cost), double(costmap->getCost(cell_x, cell_y)));
   double center_cost = double(costmap->getCost(cell_x, cell_y));
-
+  double occ_cost = std::max(footprint_cost, center_cost);
 
   // Limit velocity based on costs
-  double max_vel = (1 - center_cost / 255.0) * max_trans_vel;
+  // ToDo: efficiency!
+  // Choose either based on occ_cost or center cost
+  double vel_cost = occ_cost; // or center_cost
+  //double max_vel = (1 - occ_cost / 255.0) * max_trans_vel;
+  //double max_vel = (1 - center_cost / 255.0) * max_trans_vel;
+  double max_vel = 0.0;
+  double thresh_vel = 0.2*max_trans_vel;
+  unsigned int thresh_cost = 128;
+  if (vel_cost < thresh_cost) {
+      max_vel = max_trans_vel - (max_trans_vel - thresh_vel)/thresh_cost*vel_cost;
+  } else {
+      max_vel = thresh_vel;
+      //max_vel = thresh_vel - thresh_vel/(254-thresh_cost)*(vel_cost-thresh_cost);
+  }
+
   if (hypot(vel_x, vel_y) > max_vel) {// && i == traj.getPointsSize() - 1)
       return -5.0;
   }
 
-  double occ_cost = std::max(footprint_cost, center_cost);
+
   return occ_cost;
 }
 

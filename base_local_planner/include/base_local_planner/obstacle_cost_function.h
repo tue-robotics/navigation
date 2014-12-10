@@ -78,6 +78,12 @@ public:
       const double& max_trans_vel,
       std::vector<geometry_msgs::Point> footprint_spec, costmap_2d::Costmap2D *costmap, WorldModel *world_model);
 
+  ///// Temp: for additional debugging
+  std::vector<geometry_msgs::Point> getFootprint() {return footprint_spec_;}
+  costmap_2d::Costmap2D* getCostMap() {return costmap_;}
+  base_local_planner::WorldModel* getWorldModel() {return world_model_;}
+  /////
+
 private:
   costmap_2d::Costmap2D* costmap_;
   std::vector<geometry_msgs::Point> footprint_spec_;
