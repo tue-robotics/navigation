@@ -163,6 +163,10 @@ target_link_libraries(costmap_2d_node
     costmap_2d
     )
 
+find_package(OpenCV REQUIRED)
+add_executable(costmap_2d_test_layer test/test_layer.cpp)
+target_link_libraries(costmap_2d_test_layer layers ${OpenCV_LIBRARIES})
+
 ## Configure Tests
 if(CATKIN_ENABLE_TESTING)
   # Find package test dependencies
