@@ -43,11 +43,47 @@ public:
 
 // ----------------------------------------------------------------------------------------------------
 
-DilationLayer::DilationLayer() : distance_sq_map_(0), window_width_(0), window_height_(0)
+DilationLayer::DilationLayer() : distance_sq_map_(0), window_width_(0), window_height_(0), dsrv_(NULL)
 {
     target_cell_value_ = 255;
-    dilation_cell_value_ = 127;
-    dilation_radius_cells_ = 10;
+    dilation_cell_value_ = 255;
+    dilation_radius_ = 0.01;
+}
+
+// ----------------------------------------------------------------------------------------------------
+
+void DilationLayer::reconfigureCB(costmap_2d::DilationPluginConfig &config, uint32_t level)
+{
+  target_cell_value_     = config.target_cell_value;
+  dilation_cell_value_   = config.dilation_cell_value;
+  dilation_radius_       = config.dilation_radius;
+
+  ROS_INFO_STREAM("Dilation:\n\tTarget cell value:   " << (int)target_cell_value_ << "\n\tDilation cell value: " << (int)dilation_cell_value_ << "\n\tDilation radius:     " << (double)dilation_radius_ << "\n");
+
+}
+
+void DilationLayer::onInitialize()
+{
+    ROS_INFO("On initialize");
+    //boost::unique_lock < boost::shared_mutex > lock(*access_);
+    ros::NodeHandle nh("~/" + name_), g_nh;
+    //current_ = true;
+    //seen_ = NULL;
+    //need_reinflation_ = false;
+    ROS_INFO("Defining reconfigurecallback");
+    dynamic_reconfigure::Server<costmap_2d::DilationPluginConfig>::CallbackType cb = boost::bind(
+        &DilationLayer::reconfigureCB, this, _1, _2);
+
+    if(dsrv_ != NULL){
+      dsrv_->clearCallback();
+      dsrv_->setCallback(cb);
+    }
+    else
+    {
+      dsrv_ = new dynamic_reconfigure::Server<costmap_2d::DilationPluginConfig>(ros::NodeHandle("~/" + name_));
+      dsrv_->setCallback(cb);
+    }
+    ROS_INFO("On initialize done");
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -55,6 +91,8 @@ DilationLayer::DilationLayer() : distance_sq_map_(0), window_width_(0), window_h
 DilationLayer::~DilationLayer()
 {
     delete distance_sq_map_;
+    if(dsrv_)
+        delete dsrv_;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -70,8 +108,10 @@ void DilationLayer::updateCosts(Costmap2D& master_grid, int min_i, int min_j, in
     unsigned int w_width = max_i - min_i;
     unsigned int w_height = max_j - min_j;
 
+    int dilation_radius_cells = dilation_radius_ / master_grid.getResolution();
+
     // Calculate the squared dilation radius (in cells)
-    int dilation_radius_cells_sq = dilation_radius_cells_ * dilation_radius_cells_;
+    int dilation_radius_cells_sq = dilation_radius_cells * dilation_radius_cells;
 
     // Check if we need to allocate a distance map (if it not yet exists, or if the window size changed)
     if (!distance_sq_map_ || w_width != window_width_ || w_height != window_height_)

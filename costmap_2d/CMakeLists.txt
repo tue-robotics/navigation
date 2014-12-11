@@ -52,6 +52,7 @@ generate_messages(
 # dynamic reconfigure
 generate_dynamic_reconfigure_options(
   cfg/Costmap2D.cfg
+  cfg/DilationPlugin.cfg
   cfg/ObstaclePlugin.cfg
   cfg/GenericPlugin.cfg
   cfg/InflationPlugin.cfg
