@@ -117,7 +117,7 @@ void DilationLayer::updateCosts(Costmap2D& master_grid, int min_i, int min_j, in
             // Check if cell has target cell value (the value we want to dilate)
             if (cost == target_cell_value_)
             {
-                int window_index = (i - min_i) * w_width + (j - min_j);
+                int window_index = (j - min_j) * w_width + (i - min_i);
                 distance_sq_map_[window_index] = dilation_radius_cells_sq;
 
                 // Check if the cell borders to a cell with non-target value. If so, it is a border
@@ -169,6 +169,8 @@ void DilationLayer::updateCosts(Costmap2D& master_grid, int min_i, int min_j, in
                 }
             }
         }
+
+        Q.pop();
     }
 
     for(std::vector<int>::const_iterator it = dilated_cells.begin(); it != dilated_cells.end(); ++it)
