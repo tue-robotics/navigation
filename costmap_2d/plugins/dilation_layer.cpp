@@ -47,6 +47,7 @@ DilationLayer::DilationLayer() : distance_sq_map_(0), window_width_(0), window_h
 {
     target_cell_value_ = 255;
     dilation_cell_value_ = 127;
+    dilation_radius_cells_ = 10;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -154,12 +155,15 @@ void DilationLayer::updateCosts(Costmap2D& master_grid, int min_i, int min_j, in
                 // Only dilate in the direction of target cells
                 if (master_array[new_index] == target_cell_value_)
                 {
-                    int new_window_index = c.window_index + kc.delta_window_index;
                     short dx_new = c.dx + kc.dx;
                     short dy_new = c.dy + kc.dy;
+                    int new_distance_sq = (dx_new * dx_new) + (dy_new * dy_new);
 
-                    int new_distance = (dx_new * dx_new) + (dy_new * dy_new);
-                    Q.push(CellData(new_index, new_window_index, dx_new, dy_new, new_distance));
+                    if (new_distance_sq < dilation_radius_cells_sq)
+                    {
+                        int new_window_index = c.window_index + kc.delta_window_index;
+                        Q.push(CellData(new_index, new_window_index, dx_new, dy_new, new_distance_sq));
+                    }
                 }
             }
         }
