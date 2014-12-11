@@ -133,13 +133,15 @@ void DilationLayer::updateCosts(Costmap2D& master_grid, int min_i, int min_j, in
         }
     }
 
+    std::vector<int> dilated_cells;
+
     while(!Q.empty())
     {
         const CellData& c = Q.front();
         int current_distance = distance_sq_map_[c.window_index];
 
         // Set the value of the current set to the new cell value
-        master_array[c.index] = dilation_cell_value_;
+        dilated_cells.push_back(c.index);
 
         // Check if we have to expand
         if (c.distance_sq < current_distance)
@@ -168,6 +170,9 @@ void DilationLayer::updateCosts(Costmap2D& master_grid, int min_i, int min_j, in
             }
         }
     }
+
+    for(std::vector<int>::const_iterator it = dilated_cells.begin(); it != dilated_cells.end(); ++it)
+        master_array[*it] = dilation_cell_value_;
 }
 
 } // end namespace costmap_2d
