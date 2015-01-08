@@ -221,6 +221,7 @@ namespace dwa_local_planner {
             alignment_costs_.setScale(align_align_scale_);
             plan_costs_.setScale(align_plan_scale_);
             goal_costs_.setScale(align_goal_scale_);
+            goal_costs_.setXShift(0.0);
 
             alignment_costs_.setDesiredOrientation(tf::getYaw(local_plan.front().pose.orientation));
 
@@ -234,6 +235,8 @@ namespace dwa_local_planner {
             alignment_costs_.setScale(default_align_scale_);
             plan_costs_.setScale(default_plan_scale_);
             goal_costs_.setScale(default_goal_scale_);
+            // ToDo: don't hardcode
+            goal_costs_.setXShift(0.0);
 
             alignment_costs_.setDesiredOrientation(tf::getYaw(local_plan.front().pose.orientation));
 
@@ -247,6 +250,7 @@ namespace dwa_local_planner {
             alignment_costs_.setScale(arrive_align_scale_);
             plan_costs_.setScale(arrive_plan_scale_);
             goal_costs_.setScale(arrive_goal_scale_);
+            goal_costs_.setXShift(0.0);
 
             alignment_costs_.setDesiredOrientation(tf::getYaw(local_plan.back().pose.orientation));
 
@@ -262,6 +266,9 @@ namespace dwa_local_planner {
         base_local_planner::planFromLookahead(local_plan, lookahead, local_plan_from_lookahead);
 
         goal_costs_.setTargetPoses(local_plan_from_lookahead);
+        //std::vector<geometry_msgs::PoseStamped> local_goal;
+        //local_goal.push_back(local_plan_from_lookahead[0]);
+        //goal_costs_.setTargetPoses(local_goal);
         plan_costs_.setTargetPoses(local_plan);
 
         //! Update footprint if changed
@@ -311,7 +318,7 @@ namespace dwa_local_planner {
             obstacle_costs_.getCostMap(),
             obstacle_costs_.getWorldModel());
             //std::vector<geometry_msgs::Point> footprint_spec, costmap_2d::Costmap2D *costmap, WorldModel *world_model);*/
-        ROS_WARN_THROTTLE(1.0, "Footprint cost = %f", cost);
+        //ROS_WARN_THROTTLE(1.0, "Footprint cost = %f", cost);
         /////
 
         return result_traj;

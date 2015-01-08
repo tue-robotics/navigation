@@ -112,6 +112,7 @@ namespace dwa_local_planner {
         /// Helper functions
         bool getRobotState(tf::Stamped<tf::Pose>& robot_pose, tf::Stamped<tf::Pose>& robot_vel);
         bool getRobotStateAndLocalPlan(tf::Stamped<tf::Pose>& robot_pose, tf::Stamped<tf::Pose>& robot_vel, std::vector<geometry_msgs::PoseStamped>& local_plan);
+        bool isStuck();
 
         /// for visualisation, publishers of the local plan and chosen trajectory
         ros::Publisher l_plan_pub_, l_traj_pub_;

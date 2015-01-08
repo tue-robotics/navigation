@@ -202,6 +202,48 @@ namespace dwa_local_planner {
         return true;
     }
 
+    bool DWAPlannerROS::isStuck()
+    {
+
+        /// Declare static variables
+        static bool prev_stopped = false;
+        static bool prev_stuck = false;
+        static ros::Time begin_stop = ros::Time::now();
+
+        /// Determine whether the robot has stopped
+        tf::Stamped<tf::Pose> robot_pose, robot_vel;
+        if (!getRobotState(robot_pose, robot_vel))
+            return true;
+        base_local_planner::LocalPlannerLimits l = planner_util_.getCurrentLimits();
+        bool   stopped       = base_local_planner::stopped(robot_vel, l.rot_stopped_vel, l.trans_stopped_vel);
+
+        /// If the robot is stopped after driving, log this timestamp
+        if (stopped && !prev_stopped) {
+            begin_stop = ros::Time::now();
+        }
+        prev_stopped = stopped;
+
+        /// The robot is stuck if it is standing still for one second
+        bool stuck = false;
+        if (stopped) {
+            double stoptime = (ros::Time::now() - begin_stop).toSec();
+            if (stoptime > 1.0) {
+                stuck = true;
+            }
+        }
+
+        /// Print if it's stuck
+        if (stuck && !prev_stuck) {
+            ROS_ERROR("Now I'm really stuck...");
+        } else if (prev_stuck && !stuck) {
+            ROS_INFO("Now I'm free again!");
+        }
+        prev_stuck = stuck;
+
+        return stuck;
+
+    }
+
     void DWAPlannerROS::initialize(std::string name, tf::TransformListener* tf, costmap_2d::Costmap2DROS* costmap_ros)
     {
         if (initialized_)
@@ -256,6 +298,9 @@ namespace dwa_local_planner {
         double angle_to_goal = base_local_planner::getGoalOrientationAngleDifference(robot_pose, tf::getYaw(goal_pose.getRotation()));
         bool   stopped       = base_local_planner::stopped(robot_vel, l.rot_stopped_vel, l.trans_stopped_vel);
 
+        //ROS_INFO_THROTTLE(1.0, "Goaldist = %f, angle = %f, robot_vel = [%f, %f, %f]", xy_to_goal, angle_to_goal,
+        //                  robot_vel.getOrigin().getX(), robot_vel.getOrigin().getY(), tf::getYaw(robot_vel.getRotation()));
+
         if (xy_to_goal <= l.xy_goal_tolerance && fabs(angle_to_goal) <= l.yaw_goal_tolerance && stopped)
             return true;
         else
@@ -275,6 +320,7 @@ namespace dwa_local_planner {
             // Calculate lookahead
             double trans_vel = hypot(robot_vel.getOrigin().getY(), robot_vel.getOrigin().getX());
             double lookahead = dp_->getSimTime() * (trans_vel + planner_util_.getCurrentLimits().acc_limit_trans * dp_->getSimPeriod());
+            //ROS_INFO_THROTTLE(1.0, "Lookahead = %f (limit = %f)", planner_util_.getCurrentLimits().min_lookahead_distance, lookahead);
             lookahead = std::max(planner_util_.getCurrentLimits().min_lookahead_distance, lookahead);
 
             // Publish the local plan
@@ -296,6 +342,15 @@ namespace dwa_local_planner {
         // Publish the local plan
         publishTrajectory(traj);
 
-        return traj.cost_ >= 0;
+        // Check if the robot has not been moving for a while
+        bool stuck = isStuck();
+
+        if (stuck || traj.cost_ < 0) {
+            return false;
+        } else {
+            return true;
+        }
+
+        //return traj.cost_ >= 0;
     }
 }

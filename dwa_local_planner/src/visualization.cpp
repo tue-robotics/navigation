@@ -22,13 +22,22 @@ Visualization::Visualization(costmap_2d::Costmap2D* costmap,
 
 bool Visualization::getCellCosts(int cx, int cy, float &path_cost, float &goal_cost, float &occ_cost, float &total_cost) {
 
-    occ_cost = costmap_->getCost(cx, cy);
-
-    if (occ_cost == 0)
-    {
-        path_cost = plan_cost_.getCellCosts(cx, cy);
-        goal_cost = goal_cost_.getCellCosts(cx, cy);
+    path_cost = plan_cost_.getCellCosts(cx, cy);
+    goal_cost = goal_cost_.getCellCosts(cx, cy);
+    if (goal_cost > 300.0) {
+        goal_cost = 0.0;
     }
+    if (path_cost > 300.0) {
+        path_cost = 0.0;
+    }
+    occ_cost = costmap_->getCost(cx, cy);
+    total_cost = goal_cost + path_cost + occ_cost;
+    //ROS_INFO("Goal cost = %f", goal_cost);
+//    if (occ_cost == 0)
+//    {
+//        path_cost = plan_cost_.getCellCosts(cx, cy);
+//        goal_cost = goal_cost_.getCellCosts(cx, cy);
+//    }
 
 //    if (path_cost == path_costs_.obstacleCosts() ||
 //            path_cost == path_costs_.unreachableCellCosts() ||
