@@ -3,6 +3,7 @@
  *********************************************************************/
 
 #include <base_local_planner/occupancy_velocity_cost_function.h>
+#include <costmap_2d/cost_values.h>
 #include <cmath>
 #include <Eigen/Core>
 #include <ros/console.h>
@@ -50,7 +51,8 @@ double OccupancyVelocityCostFunction::scoreTrajectory(Trajectory &traj)
             return -7.0;
 
         double center_cost = costmap_->getCost(cell_x, cell_y);
-        double max_vel = (1 - center_cost / 255.0) * max_trans_vel_;
+        //double max_vel = (1 - center_cost / 255.0) * max_trans_vel_;
+        double max_vel = (1 - center_cost / costmap_2d::INSCRIBED_INFLATED_OBSTACLE) * max_trans_vel_;
 
         if (hypot(traj.xv_, traj.yv_) > max_vel && i == traj.getPointsSize() - 1)
             return -5.0;
