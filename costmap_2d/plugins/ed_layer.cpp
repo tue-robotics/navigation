@@ -35,11 +35,12 @@ void EdLayer::onInitialize()
   nh.param("use_maximum", use_maximum_, false);
 
   int temp_lethal_threshold, temp_unknown_cost_value;
-  nh.param("lethal_cost_threshold", temp_lethal_threshold, int(100));
+  nh.param("lethal_cost_threshold", temp_lethal_threshold, int(-1));
   nh.param("unknown_cost_value", temp_unknown_cost_value, int(-1));
   nh.param("trinary_costmap", trinary_costmap_, true);
 
-  lethal_threshold_ = std::max(std::min(temp_lethal_threshold, 100), 0);
+  if (temp_lethal_threshold != -1) { std::cout << "lethal_cost_threshold is not a parameter in the ED layer!!!" << std::endl;}
+  lethal_threshold_ = 2;//std::max(std::min(temp_lethal_threshold, 100), 0);
   unknown_cost_value_ = temp_unknown_cost_value;
   //we'll subscribe to the latched topic that the map server uses
   ROS_INFO("Requesting the map...");
@@ -87,18 +88,19 @@ void EdLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t le
 
 unsigned char EdLayer::interpretValue(unsigned char value)
 {
+
   //check if the static value is above the unknown or lethal thresholds
   if (track_unknown_space_ && value == unknown_cost_value_)
     return NO_INFORMATION;
   else if (!track_unknown_space_ && value == unknown_cost_value_)
     return FREE_SPACE;
   else if (value >= lethal_threshold_)
-    return LETHAL_OBSTACLE;
+    return value + 200; // Increase by 200
   else if (trinary_costmap_)
     return FREE_SPACE;
+  else
+      ROS_ERROR("Something went terribly wrong");
 
-  double scale = (double) value / lethal_threshold_;
-  return scale * LETHAL_OBSTACLE;
 }
 
 void EdLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
