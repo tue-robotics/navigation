@@ -53,9 +53,11 @@ static const unsigned char DOOR = 240;
 static const unsigned char GRASPABLE_OBJECT = 230;
 
 // Large, possibly moving objects (furniture etc.) (Range 220 - 229)
+static const unsigned char MOBILE_FURNITURE = 225;
 static const unsigned char UNKNONW_OBJECT = 225;
 
 // Walls and stationary stuff (Range 202 - 209)
+static const unsigned char STATIC_FURNITURE = 202;
 static const unsigned char WALL = 202;
 
 /// Lethal and lower values
