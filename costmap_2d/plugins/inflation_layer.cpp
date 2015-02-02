@@ -217,7 +217,8 @@ inline void InflationLayer::enqueue(unsigned char* grid, unsigned int index, uns
     unsigned char cost = costLookup(mx, my, src_x, src_y);
     unsigned char old_cost = grid[index];
 
-    if (old_cost != target_cell_value_ && old_cost == LETHAL_OBSTACLE)
+    //if (old_cost != target_cell_value_ && old_cost == LETHAL_OBSTACLE)
+    if (old_cost != target_cell_value_ && old_cost >= LETHAL_OBSTACLE && old_cost < NO_INFORMATION)
       return;
 
     if (old_cost != target_cell_value_)
