@@ -52,6 +52,7 @@ generate_messages(
 # dynamic reconfigure
 generate_dynamic_reconfigure_options(
   cfg/Costmap2D.cfg
+  cfg/DilationPlugin.cfg
   cfg/ObstaclePlugin.cfg
   cfg/GenericPlugin.cfg
   cfg/InflationPlugin.cfg
@@ -105,6 +106,29 @@ target_link_libraries(costmap_2d
   ${OpenCV_LIBRARIES}
 )
 
+set(HEADER_FILES
+  include/costmap_2d/array_parser.h
+  include/costmap_2d/footprint.h
+  include/costmap_2d/costmap_math.h
+  include/costmap_2d/layered_costmap.h
+  include/costmap_2d/inflation_layer.h
+  include/costmap_2d/cell_data.h
+  include/costmap_2d/costmap_2d_ros.h
+  include/costmap_2d/observation_buffer.h
+  include/costmap_2d/static_layer.h
+  include/costmap_2d/costmap_2d_publisher.h
+  include/costmap_2d/costmap_2d.h
+  include/costmap_2d/dilation_layer.h
+  include/costmap_2d/footprint_layer.h
+  include/costmap_2d/cost_values.h
+  include/costmap_2d/costmap_layer.h
+  include/costmap_2d/observation.h
+  include/costmap_2d/layer.h
+  include/costmap_2d/voxel_layer.h
+  include/costmap_2d/obstacle_layer.h
+  include/costmap_2d/testing_helper.h
+)
+
 add_library(layers
   plugins/ed_layer.cpp
   plugins/footprint_layer.cpp
@@ -113,6 +137,8 @@ add_library(layers
   plugins/static_layer.cpp
   plugins/voxel_layer.cpp
   src/observation_buffer.cpp
+  plugins/dilation_layer.cpp
+  ${HEADER_FILES}
 )
 target_link_libraries(layers
   costmap_2d
@@ -138,6 +164,10 @@ add_executable(costmap_2d_node src/costmap_2d_node.cpp)
 target_link_libraries(costmap_2d_node
     costmap_2d
     )
+
+find_package(OpenCV REQUIRED)
+add_executable(costmap_2d_test_layer test/test_layer.cpp)
+target_link_libraries(costmap_2d_test_layer layers ${OpenCV_LIBRARIES})
 
 ## Configure Tests
 if(CATKIN_ENABLE_TESTING)

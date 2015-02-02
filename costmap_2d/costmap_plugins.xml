@@ -3,6 +3,9 @@
     <class type="costmap_2d::EdLayer"  base_class_type="costmap_2d::Layer">
       <description>Connects to ED via map server, but with a range of cost values.</description>
     </class>
+    <class type="costmap_2d::DilationLayer"  base_class_type="costmap_2d::Layer">
+      <description>Dilates cost areas of a certain value.</description>
+    </class>
     <class type="costmap_2d::FootprintLayer"  base_class_type="costmap_2d::Layer">
       <description>Clears the area in the costmap under the footprint of the robot.</description>
     </class>
