@@ -125,14 +125,14 @@ void DilationLayer::updateCosts(Costmap2D& master_grid, int min_i, int min_j, in
         // This prevents the algorithms from accidentally dilating off the window
         for(int i = 0; i < w_width; ++i)
         {
-            distance_sq_map_[i] = dilation_radius_cells_sq;
-            distance_sq_map_[w_width * (w_height - 1) + i] = dilation_radius_cells_sq;
+            distance_sq_map_[i] = 0;
+            distance_sq_map_[w_width * (w_height - 1) + i] = 0;
         }
 
         for(int j = 0; j < w_height; ++j)
         {
-            distance_sq_map_[w_width * j] = dilation_radius_cells_sq;
-            distance_sq_map_[w_width * j + (w_width - 1)] = dilation_radius_cells_sq;
+            distance_sq_map_[w_width * j] = 0;
+            distance_sq_map_[w_width * j + (w_width - 1)] = 0;
         }
     }
 
@@ -147,9 +147,9 @@ void DilationLayer::updateCosts(Costmap2D& master_grid, int min_i, int min_j, in
     std::queue<CellData> Q;
 
     // Loop over all cells in the given window, and queue border cells that have the target value
-    for (int j = min_j; j < max_j; j++)
+    for (int j = min_j + 1; j + 1 < max_j; j++)
     {
-        for (int i = min_i; i < max_i; i++)
+        for (int i = min_i + 1; i + 1 < max_i; i++)
         {
             int index = master_grid.getIndex(i, j);
             unsigned char cost = master_array[index];
@@ -162,10 +162,10 @@ void DilationLayer::updateCosts(Costmap2D& master_grid, int min_i, int min_j, in
 
                 // Check if the cell borders to a cell with non-target value. If so, it is a border
                 // cell, so enqueue it.
-                if ((i > 0 && master_array[index - 1] != target_cell_value_) ||
-                        (i + 1 < width && master_array[index + 1] != target_cell_value_) ||
-                        (j > 0 && master_array[index - width] != target_cell_value_) ||
-                        (j + 1 < height && master_array[index + width] != target_cell_value_))
+                if (master_array[index - 1] != target_cell_value_ ||
+                    master_array[index + 1] != target_cell_value_ ||
+                    master_array[index - width] != target_cell_value_ ||
+                    height && master_array[index + width] != target_cell_value_)
                 {
                     Q.push(CellData(index, window_index, 0, 0, 0));
                 }
