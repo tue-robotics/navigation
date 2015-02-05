@@ -25,16 +25,16 @@ bool Visualization::getCellCosts(int cx, int cy, float &path_cost, float &goal_c
     path_cost = plan_cost_.getCellCosts(cx, cy);
     goal_cost = goal_cost_.getCellCosts(cx, cy);
 
-    path_cost = std::max(float(255.0), path_cost);
-    goal_cost = std::max(float(255.0), goal_cost);
+    path_cost = std::min(float(255.0), path_cost);
+    goal_cost = std::min(float(255.0), goal_cost);
 
     occ_cost = costmap_->getCost(cx, cy);
     total_cost = goal_cost + path_cost + occ_cost;
-    if (occ_cost == 0)
-    {
-        path_cost = plan_cost_.getCellCosts(cx, cy);
-        goal_cost = goal_cost_.getCellCosts(cx, cy);
-    }
+    //if (occ_cost == 0)
+    //{
+    //    path_cost = plan_cost_.getCellCosts(cx, cy);
+    //    goal_cost = goal_cost_.getCellCosts(cx, cy);
+    //}
 
 //    if (path_cost == path_costs_.obstacleCosts() ||
 //            path_cost == path_costs_.unreachableCellCosts() ||
