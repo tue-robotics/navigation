@@ -19,7 +19,6 @@ find_package(catkin REQUIRED
             std_msgs
             tf
             voxel_grid
-            ed_sensor_integration
             visualization_msgs
         )
 
