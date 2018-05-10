@@ -242,19 +242,21 @@ namespace dwa_local_planner {
         // Reset the motion time stamp of the planner
         dp_->resetMotionStamp();
 
+        unsigned int size = 5; // smoothing lookahead index
+
         std::vector<geometry_msgs::PoseStamped> new_global_plan = orig_global_plan;
         for(unsigned int i = 0; i < orig_global_plan.size(); ++i)
         {
-            unsigned int size = 5;
-            if (i + size < orig_global_plan.size())
+            unsigned int i2 = i + size;
+            if (i2 < orig_global_plan.size())
             {
-              double yaw = atan2(orig_global_plan[i+size].pose.position.y - orig_global_plan[i].pose.position.y,
-                                 orig_global_plan[i+size].pose.position.x - orig_global_plan[i].pose.position.x);
+              double yaw = atan2(orig_global_plan[i2].pose.position.y - orig_global_plan[i].pose.position.y,
+                                 orig_global_plan[i2].pose.position.x - orig_global_plan[i].pose.position.x);
               new_global_plan[i].pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
             }
-            else
+            else if (i < orig_global_plan.size() - 1 && i > 0)
             {
-              new_global_plan[i].pose.orientation = orig_global_plan[size-1].pose.orientation;
+              new_global_plan[i].pose.orientation = new_global_plan[i-1].pose.orientation;
             }
         }
 
