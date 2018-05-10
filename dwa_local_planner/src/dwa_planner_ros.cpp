@@ -242,7 +242,23 @@ namespace dwa_local_planner {
         // Reset the motion time stamp of the planner
         dp_->resetMotionStamp();
 
-        return planner_util_.setPlan(orig_global_plan);
+        std::vector<geometry_msgs::PoseStamped> new_global_plan = orig_global_plan;
+        for(unsigned int i = 0; i < orig_global_plan.size(); ++i)
+        {
+            unsigned int size = 5;
+            if (i + size < orig_global_plan.size())
+            {
+              double yaw = atan2(orig_global_plan[i+size].pose.position.y - orig_global_plan[i].pose.position.y,
+                                 orig_global_plan[i+size].pose.position.x - orig_global_plan[i].pose.position.x);
+              new_global_plan[i].pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
+            }
+            else
+            {
+              new_global_plan[i].pose.orientation = orig_global_plan[size-1].pose.orientation;
+            }
+        }
+
+        return planner_util_.setPlan(new_global_plan);
     }
 
     bool DWAPlannerROS::isGoalReached()
@@ -258,7 +274,9 @@ namespace dwa_local_planner {
 
         double xy_to_goal    = base_local_planner::getGoalPositionDistance(robot_pose, goal_pose.getOrigin().getX(), goal_pose.getOrigin().getY());
         double angle_to_goal = base_local_planner::getGoalOrientationAngleDifference(robot_pose, tf::getYaw(goal_pose.getRotation()));
-        bool   stopped       = base_local_planner::stopped(robot_vel, l.rot_stopped_vel, l.trans_stopped_vel);
+        bool   stopped       = true;
+
+//        ROS_INFO("XY to goal: %.3f, Angle to goal: %.3f, Stopped: %d", xy_to_goal, angle_to_goal, (int)stopped);
 
         if (xy_to_goal <= l.xy_goal_tolerance && fabs(angle_to_goal) <= l.yaw_goal_tolerance && stopped)
             return true;
