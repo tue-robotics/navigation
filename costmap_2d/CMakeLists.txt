@@ -64,7 +64,7 @@ catkin_package(
         include
         ${EIGEN3_INCLUDE_DIRS}
         ${PCL_INCLUDE_DIRS}
-    LIBRARIES costmap_2d
+    LIBRARIES costmap_2d layers
     CATKIN_DEPENDS
         dynamic_reconfigure
         geometry_msgs
