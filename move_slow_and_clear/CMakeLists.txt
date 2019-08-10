@@ -4,24 +4,23 @@ project(move_slow_and_clear)
 find_package(catkin REQUIRED
     COMPONENTS
         cmake_modules
-        roscpp
-        nav_core
         costmap_2d
-        actionlib_msgs
-        std_msgs
+        geometry_msgs
+        nav_core
         pluginlib
+        roscpp
         )
 
 
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
+remove_definitions(-DDISABLE_LIBUSB-1.0)
 find_package(Boost REQUIRED COMPONENTS thread)
 include_directories(
     include
     ${catkin_INCLUDE_DIRS}
-    SYSTEM
-        ${EIGEN3_INCLUDE_DIRS}
-        ${PCL_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
 )
 add_definitions(${EIGEN3_DEFINITIONS})
 
@@ -29,13 +28,14 @@ catkin_package(
     INCLUDE_DIRS include
     LIBRARIES move_slow_and_clear
     CATKIN_DEPENDS
-        roscpp
-        pluginlib
+        geometry_msgs
         nav_core
+        pluginlib
+        roscpp
 )
 
 add_library(${PROJECT_NAME} src/move_slow_and_clear.cpp)
-add_dependencies(${PROJECT_NAME} geometry_msgs_generate_messages_cpp)
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}
     ${Boost_LIBRARIES}
     ${catkin_LIBRARIES}
@@ -48,6 +48,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
     PATTERN ".svn" EXCLUDE)
 
 install(TARGETS move_slow_and_clear
+       ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
        )
 
