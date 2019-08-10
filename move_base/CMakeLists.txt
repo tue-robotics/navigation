@@ -3,13 +3,23 @@ project(move_base)
 
 find_package(catkin REQUIRED
     COMPONENTS
-        cmake_modules
-        roscpp
-        pluginlib
         actionlib
+        base_local_planner
+        clear_costmap_recovery
+        cmake_modules
+        costmap_2d
         dynamic_reconfigure
+        geometry_msgs
         message_generation
+        move_base_msgs
         nav_core
+        nav_msgs
+        navfn
+        pluginlib
+        roscpp
+        rospy
+        rotate_recovery
+        std_srvs
         tf
 )
 find_package(Eigen3 REQUIRED)
@@ -22,8 +32,11 @@ generate_dynamic_reconfigure_options(
 
 catkin_package(
     CATKIN_DEPENDS
-        roscpp
         dynamic_reconfigure
+        geometry_msgs
+        move_base_msgs
+        nav_msgs
+        roscpp
 )
 
 include_directories(
@@ -40,32 +53,26 @@ target_link_libraries(move_base
     ${Boost_LIBRARIES}
     ${catkin_LIBRARIES}
     )
-add_dependencies(move_base move_base_gencfg)
-add_dependencies(move_base geometry_msgs_generate_messages_cpp)
+add_dependencies(move_base ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_executable(move_base_node
   src/move_base_node.cpp
 )
+add_dependencies(move_base_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(move_base_node move_base)
 set_target_properties(move_base_node PROPERTIES OUTPUT_NAME move_base)
-
-install(DIRECTORY launch
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-    USE_SOURCE_PERMISSIONS
-    )
-
-install(
-    PROGRAMS
-       scripts/subtopic_forwarder.py
-       scripts/subtopic_forwarder_node.py
-       scripts/warner.py
-    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
 
 install(
     TARGETS
         move_base
         move_base_node
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+## Mark cpp header files for installation
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
 )
