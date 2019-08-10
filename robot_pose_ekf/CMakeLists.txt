@@ -5,19 +5,7 @@ project(robot_pose_ekf)
 find_package(PkgConfig)
 pkg_check_modules(BFL REQUIRED orocos-bfl)
 
-# People building this branch of nav within groovy will need this version:
 include_directories(${BFL_INCLUDE_DIRS})
-# People building this branch of nav within hydro will need this version:
-include_directories(${BFL_INCLUDE_DIRS}/bfl)
-
-# when no one is building this branch in groovy anymore, the .../bfl
-# version should be removed and the
-# #include <filter/extendedkalmanfilter.h>
-# line in src/odom_estimation.h should become
-# #include <bfl/filter/extendedkalmanfilter.h>
-
-message("BFL include dirs:" ${BFL_INCLUDE_DIRS})
-message("BFL library dirs:" ${BFL_LIBRARY_DIRS})
 link_directories(${BFL_LIBRARY_DIRS})
 
 find_package(catkin REQUIRED
@@ -47,7 +35,12 @@ generate_messages(
 
 catkin_package(
     CATKIN_DEPENDS
+        geometry_msgs
+        message_runtime
+        nav_msgs
         roscpp
+        sensor_msgs
+        std_msgs
 )
 
 include_directories(
@@ -65,11 +58,21 @@ target_link_libraries(robot_pose_ekf
     ${Boost_LIBRARIES}
     ${BFL_LIBRARIES}
     )
-add_dependencies(robot_pose_ekf robot_pose_ekf_generate_messages_cpp)
+add_dependencies(robot_pose_ekf ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 install(
     TARGETS
         robot_pose_ekf
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(
+    FILES robot_pose_ekf.launch example_with_gps.launch
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+install(
+    PROGRAMS scripts/wtf.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
@@ -91,6 +94,7 @@ target_link_libraries(test_robot_pose_ekf
     ${BFL_LIBRARIES}
     gtest
     )
+add_dependencies(test_robot_pose_ekf ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 catkin_download_test_data(
   download_data_zero_covariance.bag
@@ -105,9 +109,10 @@ target_link_libraries(test_robot_pose_ekf_zero_covariance
     ${BFL_LIBRARIES}
     gtest
     )
+add_dependencies(test_robot_pose_ekf_zero_covariance ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 # This has to be done after we've already built targets, or catkin variables get borked
-find_package(rostest)
+find_package(rostest REQUIRED)
 add_rostest(${CMAKE_CURRENT_SOURCE_DIR}/test/test_robot_pose_ekf.launch)
 add_rostest(${CMAKE_CURRENT_SOURCE_DIR}/test/test_robot_pose_ekf_zero_covariance.launch)
 
