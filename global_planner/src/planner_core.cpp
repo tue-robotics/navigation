@@ -77,6 +77,17 @@ GlobalPlanner::GlobalPlanner(std::string name, costmap_2d::Costmap2D* costmap, s
     initialize(name, costmap, frame_id);
 }
 
+GlobalPlanner::~GlobalPlanner() {
+    if (p_calc_)
+        delete p_calc_;
+    if (planner_)
+        delete planner_;
+    if (path_maker_)
+        delete path_maker_;
+    if (dsrv_)
+        delete dsrv_;
+}
+
 void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros) {
     initialize(name, costmap_ros->getCostmap(), costmap_ros->getGlobalFrameID());
 }
@@ -121,6 +132,8 @@ void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2D* costmap,
         else
             path_maker_ = new GradientPath(p_calc_);
 
+        orientation_filter_ = new OrientationFilter();
+
         plan_pub_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
         potential_pub_ = private_nh.advertise<nav_msgs::OccupancyGrid>("potential", 1);
 
@@ -130,9 +143,6 @@ void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2D* costmap,
         private_nh.param("planner_window_y", planner_window_y_, 0.0);
         private_nh.param("default_tolerance", default_tolerance_, 0.0);
         private_nh.param("publish_scale", publish_scale_, 100);
-
-        double costmap_pub_freq;
-        private_nh.param("planner_costmap_publish_frequency", costmap_pub_freq, 0.0);
 
         //get the tf prefix
         ros::NodeHandle prefix_nh;
@@ -157,6 +167,8 @@ void GlobalPlanner::reconfigureCB(global_planner::GlobalPlannerConfig& config, u
     planner_->setNeutralCost(config.neutral_cost);
     planner_->setFactor(config.cost_factor);
     publish_potential_ = config.publish_potential;
+    orientation_filter_->setMode(config.orientation_mode);
+    orientation_filter_->setWindowSize(config.orientation_window_size);
 }
 
 void GlobalPlanner::clearRobotCell(const tf::Stamped<tf::Pose>& global_pose, unsigned int mx, unsigned int my) {
@@ -255,8 +267,8 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
     wy = goal.pose.position.y;
 
     if (!costmap_->worldToMap(wx, wy, goal_x_i, goal_y_i)) {
-        ROS_WARN(
-                "The goal sent to the navfn planner is off the global costmap. Planning will always fail to this goal.");
+        ROS_WARN_THROTTLE(1.0,
+                "The goal sent to the global planner is off the global costmap. Planning will always fail to this goal.");
         return false;
     }
     if(old_navfn_behavior_){
@@ -303,6 +315,9 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
         ROS_ERROR("Failed to get a plan.");
     }
 
+    // add orientations if needed
+    orientation_filter_->processPath(start, plan);
+
     //publish the plan for visualization purposes
     publishPlan(plan);
     delete potential_array_;
@@ -316,14 +331,12 @@ void GlobalPlanner::publishPlan(const std::vector<geometry_msgs::PoseStamped>& p
         return;
     }
 
-    //create a message for the plan 
+    //create a message for the plan
     nav_msgs::Path gui_path;
     gui_path.poses.resize(path.size());
 
-    if (!path.empty()) {
-        gui_path.header.frame_id = path[0].header.frame_id;
-        gui_path.header.stamp = path[0].header.stamp;
-    }
+    gui_path.header.frame_id = frame_id_;
+    gui_path.header.stamp = ros::Time::now();
 
     // Extract the plan in world co-ordinates, we assume the path is all in the same frame
     for (unsigned int i = 0; i < path.size(); i++) {
@@ -414,11 +427,10 @@ void GlobalPlanner::publishPotential(float* potential)
     for (unsigned int i = 0; i < grid.data.size(); i++) {
         if (potential_array_[i] >= POT_HIGH) {
             grid.data[i] = -1;
-        } else 
+        } else
             grid.data[i] = potential_array_[i] * publish_scale_ / max;
     }
     potential_pub_.publish(grid);
 }
 
 } //end namespace global_planner
-

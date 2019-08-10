@@ -37,6 +37,7 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
+#define POT_HIGH 1.0e10        // unassigned cell potential
 #include <ros/ros.h>
 #include <costmap_2d/costmap_2d.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -50,9 +51,9 @@
 #include <global_planner/potential_calculator.h>
 #include <global_planner/expander.h>
 #include <global_planner/traceback.h>
+#include <global_planner/orientation_filter.h>
 #include <global_planner/GlobalPlannerConfig.h>
 
-#define POT_HIGH 1.0e10        // unassigned cell potential
 namespace global_planner {
 
 class Expander;
@@ -77,6 +78,11 @@ class GlobalPlanner : public nav_core::BaseGlobalPlanner {
          * @param  frame_id Frame of the costmap
          */
         GlobalPlanner(std::string name, costmap_2d::Costmap2D* costmap, std::string frame_id);
+
+        /**
+         * @brief  Default deconstructor for the PlannerCore object
+         */
+        ~GlobalPlanner();
 
         /**
          * @brief  Initialization function for the PlannerCore object
@@ -156,9 +162,6 @@ class GlobalPlanner : public nav_core::BaseGlobalPlanner {
          */
         void publishPlan(const std::vector<geometry_msgs::PoseStamped>& path);
 
-        ~GlobalPlanner() {
-        }
-
         bool makePlanService(nav_msgs::GetPlan::Request& req, nav_msgs::GetPlan::Response& resp);
 
     protected:
@@ -169,7 +172,7 @@ class GlobalPlanner : public nav_core::BaseGlobalPlanner {
         costmap_2d::Costmap2D* costmap_;
         std::string frame_id_;
         ros::Publisher plan_pub_;
-        bool initialized_, allow_unknown_, visualize_potential_;
+        bool initialized_, allow_unknown_;
 
     private:
         void mapToWorld(double mx, double my, double& wx, double& wy);
@@ -185,6 +188,7 @@ class GlobalPlanner : public nav_core::BaseGlobalPlanner {
         PotentialCalculator* p_calc_;
         Expander* planner_;
         Traceback* path_maker_;
+        OrientationFilter* orientation_filter_;
 
         bool publish_potential_;
         ros::Publisher potential_pub_;
