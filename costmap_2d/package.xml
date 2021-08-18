@@ -56,4 +56,5 @@
     <export>
       <costmap_2d plugin="${prefix}/costmap_plugins.xml"/>
     </export>
+
 </package>
